@@ -1,547 +1,565 @@
-/* ------------------------------------------------------------------------------------------------------
-| jQuery Scrollsections Plugin
-| -------------------------------------------------------------------------------------------------------
-| 
-| A plugin that allow you to define (full page) sections and scroll between them with mousewheel,keyboard,scrollbar and touchmouves
-|
-| /!\ REQUIRES : MouseWheel jQuery Plugin, https://github.com/brandonaaron/jquery-mousewheel 
-| /!\ REQUIRES : jQuery Special Events scrollstart & scrollstop, http://james.padolsey.com/demos/scrollevents/ 
-|
-| Version : 0.2
-| author : Stéphane Guigné (http://stephaneguigne.com)
-|
-*/
-;(function($) 
-{
-    $.fn.scrollsections = function(options) {
-        var defaults = {
-        		attr                  : 'id',     // selected attribute to get a unique id for each section (for exemple : data-role)
-                bindKeyboard            : true,     // Unable keybord to control navigation
-                bindMousewheel          : true,     // Unable mousewheel to control navigation
-                bindTouchMoves          : true,     // Unable touchmouves to control navigation
-                bindScrollBar           : true,     // Unable scroolbar to control navigation
-                animateSpeed            : 500,      // Animation speed in ms
-                scrollStepMax           : 1,        // Maximum number of sections to scroll by within mousewheel interaction 
-                beforeScrollCallback    : null,     // A function to call before each scroll
-                afterScrollCallback     : null,     // A function to call after each scroll
-                prefixName              : 'scrollsections', // Prefix name for class and id for dom elements handling by the plugin
-                initOnChosenSection     : null,     // Scrool to a custom section on init (Number or Id of the first section)
-                initAnimation           : false,    // Scroll to the initial section whitout animation
-                initOnFirstSection      : true,     // Scroll to the first section on init
-                createNavigation        : true,     // Create a navigation
-                navigationPosition      : "r",      // Position of the navigation to fix appearance (null if you don't want to)
-                debugMode               : false
-        	},
-        	s,
-        	_window				= $(window),
-            _bodyHtml           = $('body, html'),
-        	_body          		= $('body'),
-        	_nbSections 		= 0,
-        	_sectionsArray 		= [],
-        	_sectionsIdsArray 	= [],
-        	_delayFirstScroll 	= null,
-        	_currentSection 	= null,
-        	_currentStep 		= 0,
-        	_isFirstSection   	= true,
-            _isAnimated         = false,
-            _wheelDelay         = null,
-            _scroolPaused       = null,
-            _nav                = null,
-            _isIE8orLater       = false;
-        
-        s = $.extend(defaults,options);
+/**
+ * jQuery scrollSections
+ *
+ * A plugin that allows you to define (full page) sections and scroll between them with mousewheel, keyboard, scrollbar
+ * and/or touch moves.
+ *
+ * The following jQuery plugins are required for this plugin to work properly:
+ *  - jQuery mousewheel if you want mousewheel support {@link https://github.com/brandonaaron/jquery-mousewheel}
+ *  - jQuery Special Events scrollstart & scrollstop if you want scrollbar support {@link http://james.padolsey.com/demos/scrollevents/}
+ *
+ * The complete plugin was checked with JSHint {@link http://www.jshint.com/} and no problems were reported.
+ *
+ * @author Stéphane Guigné <http://stephaneguigne.com/>
+ * @author Richard Fussenegger <http://richard.fussenegger.info/>
+ * @copyright (c) 2011-2013, Stéphane Guigné
+ * @license Pending
+ * @link https://github.com/guins/jquery-scrollsections
+ * @version 0.3.0
+ */
+;(function ($, window, Math, undefined) {
+  "use strict";
 
-        this.each(function() {
-            var $section = $(this);
+  /**
+   * The name of this jQuery plugin.
+   *
+   * @type String
+   */
+  var pluginName = "scrollSections";
 
-            if(_isFirstSection) {
-            	_isFirstSection = false;
-            	$section.addClass( s.currentClassName );
-        		_currentSection = $section;
-        	}
+  /**
+   * The default options of this plugin.
+   *
+   * @type Object
+   */
+  var defaults = {
+    // Attribute from which we retrieve the unique identifier for each section.
+    attr: "id",
+    // The class that should be applied to the current navigation item.
+    active: "active-scrollsection",
+    // Enable keyboard controls.
+    keyboard: true,
+    // Enable mousehweel controls.
+    mousewheel: true,
+    // Enable touch controls.
+    touch: true,
+    // Enable scrollbar controls.
+    scrollbar: true,
+    // Enable navigation controls, also see createNavigation option.
+    navigation: true,
+    // Maximum sections to scroll within mousewheel interaction.
+    scrollMax: 1,
+    // Function to execute before each scroll.
+    before: null,
+    // Function to execute after each scroll.
+    after: null,
+    // Prefix for classes and ids of DOM elements.
+    prefix: "scrollsections",
+    // Scroll to first section on initialization, instead of the section that is visible. Also have a look at the option
+    // animateScrollToFirstSection.
+    alwaysStartWithFirstSection: false,
+    // Scroll to initial section without animation.
+    animateScrollToFirstSection: false,
+    // Create navigation? If the option navigation is set to false, this will have no effect!
+    createNavigation: true,
+    // The animation speed.
+    speed: 500,
+    // Throw execption if something goes wrong.
+    exceptions: false,
+    // The DOM context we are working in.
+    context: null
+  };
 
-            _nbSections++;
-            _sectionsArray.push( $section );
-            _sectionsIdsArray.push( $section.attr(s.attr) );
+  /**
+   * Catchable exception if something goes wrong.
+   *
+   * @param {String} message
+   *   A message describing what went wrong.
+   * @returns {ScrollSectionsException}
+   */
+  function ScrollSectionsException(message) {
+    this.name = "ScrollSectionsException";
+    this.message = message;
+  }
+
+  /**
+   * Instantiate new instance of the scrollSections plugin.
+   *
+   * @param {jQuery} elements
+   *   The DOM elements that make up our sections.
+   * @param {Object} options
+   *   [Optional] Overwrite default options of the plugin.
+   * @returns {Plugin}
+   */
+  function Plugin(elements, options) {
+    this.elements = elements;
+    this.options = $.extend({}, defaults, options);
+    this._defaults = defaults;
+    this._name = pluginName;
+    this._$window = $(window);
+    this._$htmlBody = $("html, body", this.options.context);
+    this._$body = $("body", this.options.context);
+    this._sections = elements.length;
+    this._$sections = [];
+    this._sectionIdentifiers = [];
+    this._delayFirstScroll = null;
+    this._$currentSection = null;
+    this._currentStep = 0;
+    this._isFirstSection = true;
+    this._isAnimated = false;
+    this._wheelDelay = null;
+    this._scrollPaused = false;
+    this._$nav = null;
+    this._ie8 = false;
+
+    // Enough properties, start!
+    this.init();
+  }
+
+  Plugin.prototype = {
+
+    /**
+     * Create navigation.
+     *
+     * @returns {Plugin}
+     */
+    createNavigation: function () {
+      // Only continue if we are supposed to listen on the navigation (otherwise creating it makes no sense).
+      if (this.options.navigation) {
+        // Create the navigation DOM element.
+        this._$nav = $("<nav>", { id: this.options.prefix + "-navigation" });
+
+        // Add links to each section to the navigation.
+        for (var i = 0; i < this._sections; i++) {
+          this._$nav.append($("<a>", {
+            id: this.options.prefix + "-menuitem-" + i,
+            "class": this.options.prefix + "-menuitem",
+            href: "#" + this._sectionIdentifiers[i],
+            html: "Section " + i
+          }));
+        }
+
+        // Append the newly created navigation to the body of the DOM.
+        this._$body.append(this._$nav);
+      }
+
+      return this;
+    },
+
+    /**
+     * Initialize event listeners for the navigation's menuitems.
+     *
+     * @returns {Plugin}
+     */
+    navigation: function () {
+      var self = this;
+
+      // If we have no navigation, try to get one.
+      if (this._$nav === null) {
+
+        // The user wants us to create it for him, no problem.
+        if (this.options.createNavigation) {
+          this.createNavigation();
+          this.options.createNavigation = false;
+        }
+        // Navigation is already present in the DOM, try to get it.
+        else {
+          this._$nav = $("#" + this.options.prefix + "-navigation");
+        }
+
+        // Add the sections index to each menuitem.
+        this._$nav._$menuitems = $("a", this._$nav).each(function (index) {
+          var $this = $(this);
+
+          // If this menuitem is the currently active one, add the class so our CSS knows about this as well.
+          if (index === self._currentStep) {
+            $this.addClass(self.options.active);
+          }
+
+          $this.data(self.options.prefix, index);
+        });
+      }
+
+      // Well, do we have a navigation now?
+      if (this._$nav != null && this._$nav.length > 0) {
+        this._$nav._$menuitems.click(function (event) {
+          var $this = $(this);
+
+          event.preventDefault();
+          self._$nav._$menuitems.removeClass(self.options.active);
+          $this.addClass(self.options.active);
+          self.scrollTo(parseInt($this.data(self.options.prefix), 10));
+
+          return false;
+        });
+      }
+
+      return this;
+    },
+
+    /**
+     * Initialize scrollbar event listener.
+     *
+     * @returns {Plugin}
+     */
+    scrollbar: function () {
+      var self = this;
+
+      // Check if the jQuery special events are present.
+      if (!$.event.special.scrollstop) {
+        if (this.options.exceptions) {
+          throw new ScrollSectionsException("The jQuery special events scrollstop plugin is missing.");
+        } else {
+          return this;
+        }
+      }
+
+      this._$window.bind("scrollstop", function (event) {
+        var scrollTop = self._$htmlBody.scrollTop() || self._$window.scrollTop();
+        var diff = self._$htmlBody.outerHeight();
+        var nextStep;
+        var diffTmp;
+        event.preventDefault();
+        self._scrollPaused = false;
+        if (scrollTop === 0 && self._currentStep !== 0) {
+          nextStep = 0;
+        } else if ((scrollTop === (self._sections - 1) * self._$window.height()) && self._currentStep !== (self._sections - 1)) {
+          nextStep = self._sections - 1;
+        } else {
+          for (var i = 0; i < self._sections; i++) {
+            diffTmp = Math.abs(scrollTop - self._$sections[i].offset().top);
+            if (!diff || diffTmp <= diff) {
+              diff = diffTmp;
+              nextStep = i;
+              // Already scrolled!
+              if (diff === 0) {
+                return;
+              }
+            }
+          }
+        }
+        if (nextStep > -1) {
+          self.scrollTo(nextStep);
+        }
+        return false;
+      });
+
+      return this;
+    },
+
+    /**
+     * Initialize touch event listener.
+     *
+     * @returns {Plugin}
+     */
+    touch: function () {
+      var self = this;
+
+      this._$body.bind("touchstart", function (event) {
+        var startEvent = event;
+
+        event.preventDefault();
+        self._$body.bind("touchmove", function (event) {
+          var diff = { x: startEvent.clientX - event.clientX, y: startEvent.clientY - event.clientY };
+          var nextStep;
+          event.preventDefault();
+          if ((diff.y <= -100 || diff.y >= 100) && Math.abs(diff.y) > Math.abs(diff.x)) {
+            nextStep = diff.y < 0 ? self._currentStep - 1 : self._currentStep + 1;
+            self.scrollTo(nextStep);
+          }
+          return false;
         });
 
-        if(_nbSections>0)
-        	_init();
+        return false;
+      });
 
-        /*
-        | Initialisation of the plugin
-        | 
-        */
-        function _init()
-        {
-            var reg = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-            if ( (reg.exec(window.navigator.userAgent) != null) && (parseFloat( RegExp.$1)<=8.0) )
-                _isIE8orLater = true;
+      return this;
+    },
 
-        	_controls_initAll();
+    /**
+     * Initialize keyboard event listener.
+     *
+     * @returns {Plugin}
+     */
+    keyboard: function () {
+      var self = this;
 
-            if(s.createNavigation)
-                _navigation_create();
+      this._$htmlBody.keydown(function (event) {
+        var nextStep;
+        switch (event.which) {
+          case 33: // page up
+          case 36: // pos 1
+            event.preventDefault();
+            self.scrollTo(0);
+            return false;
 
-            if(s.initOnFirstSection && !s.initOnChosenSection)
-        	   _scroll_initDefault();
-        	else if(s.initOnChosenSection)
-        		_scroll_initCustom(s.initOnChosenSection);
+          case 34: // page down
+          case 35: // end
+            event.preventDefault();
+            self.scrollTo(self._sections - 1);
+            return false;
 
-            _window.bind("resize.scrollsections", function()
-            {
-                _scroll_doScroll(_currentStep);
-            });
+          case 38: // up
+            event.preventDefault();
+            nextStep = self._currentStep - 1;
+            if (nextStep >= 0) {
+              self.scrollTo(nextStep);
+            }
+            return false;
+
+          case 40: // down
+            event.preventDefault();
+            nextStep = self._currentStep + 1;
+            if (nextStep < self._sections) {
+              self.scrollTo(nextStep);
+            }
+            return false;
+        }
+      });
+
+      return this;
+    },
+
+    /**
+     * Call any callbacks that the user defined (before or after)
+     *
+     * @param {Boolean} before
+     *   Set to true if the before callback should be called.
+     * @returns {Plugin}
+     */
+    scrollCallback: function (before) {
+      this._isAnimated = before || false;
+
+      if (before && this.options.before) {
+        this.options.before();
+      } else if (this.options.after) {
+        this.options.after();
+      }
+
+      return this;
+    },
+
+    /**
+     * Scroll to the section identified by given index.
+     *
+     * @param {Number} index
+     *   The index of the section to which we should scroll.
+     * @param {Boolean} noAnimation
+     *   Set to true if there should be no animation at all.
+     * @returns {Plugin}
+     */
+    scrollTo: function (index, noAnimation) {
+      var self = this;
+      var yTo;
+      var speed;
+
+      if (index != null && index >= 0 && index < this._sections) {
+        this._currentStep = index;
+        this._$currentSection = this._$sections[index];
+        yTo = this._$currentSection.offset().top;
+        speed = noAnimation ? 0 : this.options.speed;
+
+        // Mark any link on the page that refers to our active section active.
+        if (this._$nav) {
+          this._$nav._$menuitems.removeClass(this.options.active);
+          $("a[href='#" + this._sectionIdentifiers[index] + "']", this._$nav).addClass(this.options.active);
         }
 
-        /* ---------------------------------------------------------------------------------
-        |   NAVIGATION
-        | ----------------------------------------------------------------------------------
-        |
-        |   On demand navigation
-        |
-        */
+        // Call the before callback, stop any ongoing animation and animate to our current new section.
+        this.scrollCallback(true)._$htmlBody.stop(true, false).animate({ scrollTop: yTo }, speed, function () {
+          // Call the after callback.
+          self.scrollCallback();
+        });
+      }
 
-        /*
-        | Navigation : Create the navigation menu
-        | 
-        */
-        function _navigation_create()
-        {
-            _nav = $('<nav>')
-                        .attr('id',s.prefixName+'-navigation');
+      return this;
+    },
 
-            for(var i=0; i<_nbSections; i++)
-            {
-                $link = $('<a>')
-                            .attr('id',s.prefixName+'-link-'+i)
-                            .addClass(s.prefixName+'-link')
-                            .data(s.prefixName,{
-                                sectionPosition : i
-                            })
-                            .html('Section '+i);
+    /**
+     * Helper method for the mousewheel.
+     *
+     * @param {Number} index
+     *   The index of the section to which we should scroll.
+     * @returns {Plugin}
+     */
+    mousewheelScrollTo: function (index) {
+      this.scrollTo(index);
+      this._wheelDelay = null;
+      this._scrollPaused = true;
+      return this;
+    },
 
+    /**
+     * Initialize mousewheel event listener.
+     *
+     * @returns {Plugin}
+     */
+    mousewheel: function () {
+      var self = this;
 
-                _nav.append($link);
+      // No support for broken clients!
+      if (this._ie8) {
+        // Throwing an exception allows the user to catch and do something with it (e.g. display an alert message to the
+        // user).
+        if (this.options.exceptions) {
+          throw new ScrollSectionsException("Cannot bind mousewheel on broken client.");
+        }
+        // Silently do nothing.
+        else {
+          return this;
+        }
+      }
+
+      // Check if the jQuery mousewheel plugin is present.
+      if (!$.fn.mousewheel) {
+        if (this.options.exceptions) {
+          throw new ScrollSectionsException("The jQuery mousewheel plugin is missing.");
+        } else {
+          return this;
+        }
+      }
+
+      this._$window.mousewheel(function (event, delta, deltaX, deltaY) {
+        var stepDiff = null;
+        var nextStep = -1;
+
+        event.preventDefault();
+
+        // Only scroll if we are not animating and scrolling is not paused.
+        if (!(self._isAnimated && self._scrollPaused)) {
+
+          // Scroll Down
+          if (deltaY < 0) {
+
+            // Only allow the user to scroll down the maximum sections as defined in our options.
+            if (deltaY < -self.options.scrollMax) {
+              deltaY = -self.options.scrollMax;
             }
 
-            _body.append(_nav);
-
-            if(s.navigationPosition)
-                _navigation_fixAppearance(s.navigationPosition);
-
-            _navigation_manageEvents(true);
-        }
-
-        /*
-        | Navigation : Fix appearance of the navigation menu
-        |
-        | Optional function to apply some css properties on navigation
-        |
-        | 
-        */
-        function _navigation_fixAppearance(position)
-        {
-            var props = {};
-
-            switch(position)
-            {
-                case "r" || "right" : 
-                    props = { marginTop : -_nav.outerHeight()/2 +"px" };
-                    break;
+            if ((!nextStep || !stepDiff || deltaY < stepDiff) && ((self._currentStep - deltaY) < self._sections)) {
+              stepDiff = deltaY;
+              nextStep = self._currentStep - stepDiff;
             }
-            _nav.css(props);
-        }
+          }
+          // Scroll Up
+          else {
 
-        /*
-        | Navigation : Manage links events
-        |
-        | Manage click event and current class
-        |
-        | 
-        */
-        function _navigation_manageEvents(isInit)
-        {
-            var $links = $('.'+s.prefixName+'-link', _nav),
-                currentClassName = s.prefixName+'-link-current';
-
-            if(isInit)
-            {
-                $links
-                    .bind("click", function(event)
-                    {
-                        event.preventDefault(s.prefixName);
-
-                        var $clicked = $(this),
-                            data = $clicked.data(),
-                            nextStep = data[s.prefixName]["sectionPosition"];
-
-                        _scroll_doScroll(nextStep);
-                    });
+            // Only allow the user to scroll up the maximum sections as defined in our options.
+            if (deltaY > self.options.scrollMax) {
+              deltaY = self.options.scrollMax;
             }
 
-            $links.removeClass(currentClassName);
-
-            $links.each(function()
-            {
-                var $link = $(this),
-                    data = $link.data(),
-                    linkedStep = data[s.prefixName]["sectionPosition"];
-
-                if(_currentStep==linkedStep)
-                {   
-                    $link.addClass(currentClassName);
-                    return false;
-                }
-            });
-
-
-        }
-
-        /* ---------------------------------------------------------------------------------
-        |	CONTROLS
-        | ----------------------------------------------------------------------------------
-        |
-        |	Init all scroll controls, including mousewheel, keyboard and touchmoves
-		|
-        */
-        function _controls_initAll()
-        {
-            if(s.bindScrollBar) _controls_initScrollBar();
-        	if(s.bindMousewheel && !_isIE8orLater) _controls_initWheel();
-        	if(s.bindKeyboard) _controls_initKeyboard();
-        	if(s.bindTouchMoves) _controls_initTouch();
-        }
-
-        /*
-        | Controls : Init ScrollBar events
-        |
-        | Unable scrollbar to control the scroll
-        |
-        | 
-        */
-        function _controls_initScrollBar()
-        {
-            _window.bind("scrollstop.scrollsections", function(event)
-            {
-                var scrollTop = _bodyHtml.scrollTop() || _window.scrollTop(),
-                    diff = _bodyHtml.outerHeight(),
-                    nextStep;
-
-                if(scrollTop==0 && _currentStep!=0)
-                {
-                    nextStep = 0;
-                }
-                else if( (scrollTop==(_nbSections-1)*_window.height()) && _currentStep!=_nbSections-1)
-                {
-                    nextStep = _nbSections-1;
-                }
-                else
-                {
-                     for(var i=0; i<_nbSections; i++)
-                    {
-                        var section = _sectionsArray[i],
-                            posY = section.offset().top,
-                            diffTmp = Math.abs(scrollTop-posY);
-
-                        if(!diff || diffTmp<=diff) 
-                        {
-                            diff = diffTmp;
-                            nextStep = i;
-                            
-                            if(diff==0) // already scrolled
-                                return;
-                        }
-                    }
-                }
-
-                if(nextStep>-1)
-                    _scroll_doScroll(nextStep);
-            });
-        }
-
-        /*
-        | Controls : Init MouseWheel events
-        |
-        | Unable mousewheel to control the scroll
-        |
-        | 
-        */
-        function _controls_initWheel()
-        {
-            var stepDiff,
-                nextStep = -1;
-
-             _window.bind("scrollstop.scrollsections", function(event)
-            {
-                _scroolPaused=null;
-            });
-
-        	_window.bind("mousewheel", function(event, delta, deltaX, deltaY) {
-                
-                event.preventDefault();
-
-                var stepDiffTemp = deltaY>>0;
-
-                if(!_isAnimated && !_scroolPaused)
-                {
-                   if(deltaY < 0)
-                    {
-                        if(stepDiffTemp < -s.scrollStepMax)
-                            stepDiffTemp = -s.scrollStepMax;
-                        if(!nextStep || !stepDiff || stepDiffTemp<stepDiff)
-                        {
-                            if((_currentStep - stepDiffTemp) < _nbSections)
-                            {
-                                stepDiff = stepDiffTemp;
-                                nextStep = _currentStep - stepDiff;
-                            }
-                                
-                        }
-                    }
-                    else
-                    {
-                        if(stepDiffTemp > s.scrollStepMax)
-                            stepDiffTemp = s.scrollStepMax;
-                        if(!nextStep || !stepDiff || stepDiffTemp>stepDiff)
-                        {
-                            if(_currentStep - stepDiffTemp > -1)
-                            {
-                                stepDiff = stepDiffTemp;
-                                nextStep = _currentStep - stepDiff;
-                            }       
-                        }
-                    } 
-
-                    if(stepDiff && nextStep>-1)
-                    {
-                        if(_wheelDelay)
-                            clearTimeout(_wheelDelay);
-
-                        if(Math.abs(stepDiff)<s.scrollStepMax)
-                        {
-                            _wheelDelay = setTimeout(function()
-                            {
-                                _scroll_doScroll(nextStep);
-                                nextStep = null;
-                                stepDiff = null;
-                                _wheelDelay = null;
-                                _scroolPaused = true;
-                            },10);
-                        }
-                        else
-                        {
-                            _scroll_doScroll(nextStep);
-                            nextStep = null;
-                            stepDiff = null;
-                            _wheelDelay = null;
-                            _scroolPaused = true;
-                        }
-                    }
-                }
-
-                return false;
-            });
-        }
-
-        /*
-        | Controls : Init keyboard events
-        |
-        | Unable keyboard to control the scroll
-        |
-        | 
-        */
-        function _controls_initKeyboard()
-        {
-            _bodyHtml.bind("keydown.scrollsections", function(event)
-            {
-                var _getActiveIndex;
-                switch(event.which) {
-                    case 38: // up
-                        var nextStep = _currentStep-1;
-                        if(nextStep>=0)
-                            _scroll_doScroll(nextStep);
-                        event.preventDefault();
-                        return false;
-                    break;
-                    case 40: // down
-                        var nextStep = _currentStep+1;
-                        if(nextStep<_nbSections)
-                            _scroll_doScroll(nextStep);
-                        event.preventDefault();
-                        return false;
-                    break;
-                } 
-            });
-        }
-
-        /*
-        | Controls : Init touch events
-        |
-        | Unable touch events to control the scroll
-        |
-        | 
-        */
-       	function _controls_initTouch()
-        {
-            _body
-                .unbind('touchstart.scrollsections')
-                .bind('touchstart.scrollsections', function(event)
-                {
-                    event.preventDefault();
-
-                    var start = { x : event.clientX, y : event.clientY },
-                        stop = { x : event.clientX, y : event.clientY },
-                        diffY, 
-                        diffX, 
-                        direction;
-                    
-                    _body.bind('touchmove.scrollsections', function(event)
-                    {
-                        event.preventDefault();
-
-                        stop.x = event.clientX;
-                        stop.y = event.clientY;
-                        diffX = start.x-stop.x;
-                        diffY = start.y-stop.y;
-
-                        if( (diffY<=-100 || diffY>=100) && Math.abs(diffY)>Math.abs(diffX) )
-                        {
-                            _body.unbind('touchmove.LRSlider');
-
-                            var nextStep = diffY<0 ? _currentStep-1 : _currentStep+1;
-                            _scroll_doScroll(nextStep);
-                        }
-                    });
-                })
-                .unbind('touchend.scrollsections')
-                .bind('touchend.scrollsections', function()
-                {
-                    _body.unbind('touchmove.LRSlider');
-                });
-        }
-
-        /* ---------------------------------------------------------------------------------
-        |	SCROLL
-        | ----------------------------------------------------------------------------------
-        |
-        |	Manage all scroll activity : init, before, during, after
-		|
-        */
-        
-        /*
-        | Scroll : Default initialisation of the scroll
-        |
-        | It will scroll to the first section if the initOnFirstSection options is set to true
-        |
-        | 
-        */
-        function _scroll_initDefault()
-        {
-        	_delayFirstScroll = setTimeout(function()
-        	{
-        		_scroll_doScroll(0,!s.initAnimation);
-        	}, 50);
-        }
-
-        /*
-        | Scroll : Custom initialisation of the scroll
-        |
-        | It will scroll to the chosen section if the initOnChosenSection options is a valid id or number of section
-        |
-        | 
-        | @chosenSection (String) - the id of one of the sections
-        | OR
-        | @chosenSection (Number) - the section position
-        |
-        */
-        function _scroll_initCustom(chosenSection)
-        {
-        	var nextStep;
-        	
-        	if( !isNaN(chosenSection) && chosenSection>=0 && chosenSection<_nbSections )
-        	{
-        		nextStep = chosenSection;
-        	}
-        	else if ( isNaN(chosenSection) && (_sectionsIdsArray.join(',').indexOf(chosenSection)>-1) ) {
-        		for (var i = 0; i < _sectionsIdsArray.length; i++) {
-        			if(chosenSection == _sectionsIdsArray[i])
-        				nextStep = i;
-        		};
-        	}
-        	else {
-        		//throw 'The initial section is incorrect, by default it will be the first section';
-                return false;
-        	}
-
-            if(nextStep)
-            {
-                if(_delayFirstScroll)
-                    clearTimeout(_delayFirstScroll);
-
-                _scroll_doScroll(nextStep,!s.initAnimation);   
+            if ((!nextStep || !stepDiff || deltaY > stepDiff) && ((self._currentStep - deltaY) > -1)) {
+              stepDiff = deltaY;
+              nextStep = self._currentStep - stepDiff;
             }
-        }
+          }
 
-        /*
-        | Scroll : Before the scroll
-        |
-        | All actions + optionnal callback to do before the scroll
-        |
-        |
-        */
-        function _scroll_beforeScroll()
-        {
-            _isAnimated = true;
-
-        	if(s.beforeScrollCallback)
-        		s.beforeScrollCallback();
-        }
-
-        /*
-        | Scroll : THE SCROLL
-        |
-        | Scroll to the next section
-        |
-        | 
-        | @nextStep (Number) - position of the next section
-        | @withoutAnimation (Boolean) - prevent animation if set to true
-        |
-        */
-        function _scroll_doScroll(nextStep,withoutAnimation)
-        {
-            if(nextStep!=null && nextStep>=0 && nextStep<_nbSections)
-            {
-                _currentStep = nextStep;
-                _currentSection = _sectionsArray[nextStep];
-
-                var yTo = _currentSection.offset().top,
-                    speed = withoutAnimation ? 0 : s.animateSpeed;
-
-                _scroll_beforeScroll();
-                _navigation_manageEvents();
-
-                _bodyHtml.stop(true,false).animate({ scrollTop : yTo }, speed, function() { _scroll_afterScroll(); });
+          if (stepDiff && nextStep > -1) {
+            if (self._wheelDelay) {
+              clearTimeout(self._wheelDelay);
             }
+
+            if (Math.abs(stepDiff) < self.options.scrollMax) {
+              self._wheelDelay = setTimeout(function () {
+                self.mousewheelScrollTo(nextStep);
+              }, 10);
+            } else {
+              self.mousewheelScrollTo(nextStep);
+            }
+          }
+
         }
 
-        /*
-        | Scroll : After the scroll
-        |
-        | All actions + optionnal callback (afterScrollCallback) to do when the scroll end
-        |
-        |
-        */
-        function _scroll_afterScroll()
-        {
-            _isAnimated = false;
+        return false;
+      });
 
-        	if(s.afterScrollCallback)
-        		s.afterScrollCallback();
+      return this;
+    },
+
+    /**
+     * Initialize our plugin.
+     *
+     * @returns {Plugin}
+     */
+    init: function () {
+      /**
+       * Keep reference to our plugin instance.
+       *
+       * @type {Plugin}
+       */
+      var self = this;
+
+      // Only continue if we have any sections to compute.
+      if (this._sections > 0) {
+
+        // Loop over all DOM elements with which our plugin was initialized and fill our arrays.
+        this.elements.each(function (index) {
+          // Cache jQuery Object creation.
+          var $section = $(this);
+          var windowScrollTop = self._$window.scrollTop();
+          var offset;
+
+          self._$sections[index] = $section;
+          self._sectionIdentifiers[index] = $section.attr(self.options.attr);
+
+          if (self.options.alwaysStartWithFirstSection === true && index === 0) {
+            $section.addClass(self.options.active);
+            self._$currentSection = $section;
+            self.scrollTo(0, !self.options.animateScrollToFirstSection);
+          } else {
+            offset = $section.offset();
+            offset.bottom = offset.top + $section.height();
+
+            // Check which section is active and change the current section plus trigger active state.
+            if (windowScrollTop >= offset.top && windowScrollTop < offset.bottom) {
+              $section.addClass(self.options.active);
+              self._currentStep = index;
+              self._$currentSection = $section;
+              if (windowScrollTop !== offset.top) {
+                self.scrollTo(index);
+              }
+            }
+          }
+        });
+
+        // Check if we are working if a broken client.
+        if ((new RegExp("MSIE ([0-9]{1,}[\\.0-9]{0,})")).exec(window.navigator.userAgent) && (parseFloat(RegExp.$1) <= 8.0)) {
+          this._ie8 = true;
         }
 
-        // Preserve jQuery chainability
-    	return this;
-    };
+        // Execute each control initializer that was set to true.
+        for (var o in this.options) {
+          if (this.options[o] === true && typeof this[o] === "function") {
+            this[o]();
+          }
+        }
 
-})(jQuery);
+        // Bind to resize event and keep the current section always within the viewport.
+        this._$window.resize(function () {
+          self.scrollTo(self._currentStep);
+        });
+      }
+
+      return this;
+    }
+
+  };
+
+  /**
+   * Lightweight wrapper around our constructor, prevent multiple instantiation of our plugin.
+   *
+   * @param {Object} options
+   *   [Optional] Overwrite the default options of the scrollSections plugin.
+   * @returns {jQuery}
+   */
+  $.fn[pluginName] = function (options) {
+    // Only create a new instance if none has been registered so far.
+    if (!$.data(this, "plugin_" + pluginName)) {
+      $.data(this, "plugin_" + pluginName, new Plugin(this, options));
+    }
+
+    return this;
+  };
+
+})(jQuery, window, Math);
