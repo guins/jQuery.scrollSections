@@ -89,7 +89,7 @@
     this._wheelDelay = null;
     this._scrollPaused = false;
     this._$nav = null;
-    this._ie8 = false;
+    this._ltIE9 = false;
 
     // Enough properties, start!
     this.init();
@@ -378,7 +378,7 @@
       var self = this;
 
       // No support for broken clients!
-      if (this._ie8) {
+      if (this._ltIE9) {
         // Throwing an exception allows the user to catch and do something with it (e.g. display an alert message to the
         // user).
         if (this.options.exceptions) {
@@ -506,7 +506,7 @@
 
         // Check if we are working if a broken client.
         if ((new RegExp("MSIE ([0-9]{1,}[\\.0-9]{0,})")).exec(window.navigator.userAgent) && (parseFloat(RegExp.$1) <= 8.0)) {
-          this._ie8 = true;
+          this._ltIE9 = true;
         }
 
         // Execute each control initializer that was set to true.
