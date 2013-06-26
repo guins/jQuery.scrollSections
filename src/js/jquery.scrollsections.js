@@ -337,6 +337,7 @@
       if (index != null && index >= 0 && index < this._sections) {
         this._currentStep = index;
         this._$currentSection = this._$sections[index];
+
         yTo = this._$currentSection.offset().top;
         speed = noAnimation ? 0 : this.options.speed;
 
@@ -409,6 +410,8 @@
         // Only scroll if we are not animating and scrolling is not paused.
         if (!(self._isAnimated && self._scrollPaused)) {
 
+          deltaY = deltaY>>0; // Because steps numbers are integers
+
           // Scroll Down
           if (deltaY < 0) {
 
@@ -449,7 +452,6 @@
               self.mousewheelScrollTo(nextStep);
             }
           }
-
         }
 
         return false;
