@@ -46,9 +46,7 @@
     // The animation speed.
     speed: 500,
     // Throw execption if something goes wrong.
-    exceptions: false,
-    // The DOM context we are working in.
-    context: null
+    exceptions: false
   };
 
   /**
@@ -78,8 +76,8 @@
     this._defaults = defaults;
     this._name = pluginName;
     this._$window = $(window);
-    this._$htmlBody = $("html, body", this.options.context);
-    this._$body = $("body", this.options.context);
+    this._$htmlBody = $("html, body");
+    this._$body = $("body");
     this._sections = elements.length;
     this._$sections = [];
     this._sectionIdentifiers = [];
