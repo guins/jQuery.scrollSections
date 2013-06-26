@@ -1,12 +1,12 @@
 ;(function ($, window, Math, undefined) {
-  "use strict";
+  'use strict';
 
   /**
    * The name of this jQuery plugin.
    *
    * @type String
    */
-  var pluginName = "scrollSections";
+  var pluginName = 'scrollSections';
 
   /**
    * The default options of this plugin.
@@ -15,9 +15,9 @@
    */
   var defaults = {
     // Attribute from which we retrieve the unique identifier for each section.
-    attr: "id",
+    attr: 'id',
     // The class that should be applied to the current navigation item.
-    active: "active-scrollsection",
+    active: 'active-scrollsection',
     // Enable keyboard controls.
     keyboard: true,
     // Enable mousehweel controls.
@@ -35,7 +35,7 @@
     // Function to execute after each scroll.
     after: null,
     // Prefix for classes and ids of DOM elements.
-    prefix: "scrollsections",
+    prefix: 'scrollsections',
     // Scroll to first section on initialization, instead of the section that is visible. Also have a look at the option
     // animateScrollToFirstSection.
     alwaysStartWithFirstSection: false,
@@ -57,7 +57,7 @@
    * @returns {ScrollSectionsException}
    */
   function ScrollSectionsException(message) {
-    this.name = "ScrollSectionsException";
+    this.name = 'ScrollSectionsException';
     this.message = message;
   }
 
@@ -76,8 +76,8 @@
     this._defaults = defaults;
     this._name = pluginName;
     this._$window = $(window);
-    this._$htmlBody = $("html, body");
-    this._$body = $("body");
+    this._$htmlBody = $('html, body');
+    this._$body = $('body');
     this._sections = elements.length;
     this._$sections = [];
     this._sectionIdentifiers = [];
@@ -93,7 +93,7 @@
 
     // Enough properties, start!
     this.init();
-  }
+  };
 
   Plugin.prototype = {
 
@@ -106,15 +106,15 @@
       // Only continue if we are supposed to listen on the navigation (otherwise creating it makes no sense).
       if (this.options.navigation) {
         // Create the navigation DOM element.
-        this._$nav = $("<nav>", { id: this.options.prefix + "-navigation" });
+        this._$nav = $('<nav>', { id: this.options.prefix + '-navigation' });
 
         // Add links to each section to the navigation.
         for (var i = 0; i < this._sections; i++) {
-          this._$nav.append($("<a>", {
-            id: this.options.prefix + "-menuitem-" + i,
-            "class": this.options.prefix + "-menuitem",
-            href: "#" + this._sectionIdentifiers[i],
-            html: "Section " + i
+          this._$nav.append($('<a>', {
+            id: this.options.prefix + '-menuitem-' + i,
+            'class': this.options.prefix + '-menuitem',
+            href: '#' + this._sectionIdentifiers[i],
+            html: 'Section ' + i
           }));
         }
 
@@ -143,11 +143,11 @@
         }
         // Navigation is already present in the DOM, try to get it.
         else {
-          this._$nav = $("#" + this.options.prefix + "-navigation");
+          this._$nav = $('#' + this.options.prefix + '-navigation');
         }
 
         // Add the sections index to each menuitem.
-        this._$nav._$menuitems = $("a", this._$nav).each(function (index) {
+        this._$nav._$menuitems = $('a', this._$nav).each(function (index) {
           var $this = $(this);
 
           // If this menuitem is the currently active one, add the class so our CSS knows about this as well.
@@ -187,13 +187,13 @@
       // Check if the jQuery special events are present.
       if (!$.event.special.scrollstop) {
         if (this.options.exceptions) {
-          throw new ScrollSectionsException("The jQuery special events scrollstop plugin is missing.");
+          throw new ScrollSectionsException('The jQuery special events scrollstop plugin is missing.');
         } else {
           return this;
         }
       }
 
-      this._$window.bind("scrollstop", function (event) {
+      this._$window.bind('scrollstop', function (event) {
         var scrollTop = self._$htmlBody.scrollTop() || self._$window.scrollTop();
         var diff = self._$htmlBody.outerHeight();
         var nextStep;
@@ -233,11 +233,11 @@
     touch: function () {
       var self = this;
 
-      this._$body.bind("touchstart", function (event) {
+      this._$body.bind('touchstart', function (event) {
         var startEvent = event;
 
         event.preventDefault();
-        self._$body.bind("touchmove", function (event) {
+        self._$body.bind('touchmove', function (event) {
           var diff = { x: startEvent.clientX - event.clientX, y: startEvent.clientY - event.clientY };
           var nextStep;
           event.preventDefault();
@@ -341,7 +341,7 @@
         // Mark any link on the page that refers to our active section active.
         if (this._$nav) {
           this._$nav._$menuitems.removeClass(this.options.active);
-          $("a[href='#" + this._sectionIdentifiers[index] + "']", this._$nav).addClass(this.options.active);
+          $('a[href="#' + this._sectionIdentifiers[index] + '"]', this._$nav).addClass(this.options.active);
         }
 
         // Call the before callback, stop any ongoing animation and animate to our current new section.
@@ -381,7 +381,7 @@
         // Throwing an exception allows the user to catch and do something with it (e.g. display an alert message to the
         // user).
         if (this.options.exceptions) {
-          throw new ScrollSectionsException("Cannot bind mousewheel on broken client.");
+          throw new ScrollSectionsException('Cannot bind mousewheel on broken client.');
         }
         // Silently do nothing.
         else {
@@ -392,7 +392,7 @@
       // Check if the jQuery mousewheel plugin is present.
       if (!$.fn.mousewheel) {
         if (this.options.exceptions) {
-          throw new ScrollSectionsException("The jQuery mousewheel plugin is missing.");
+          throw new ScrollSectionsException('The jQuery mousewheel plugin is missing.');
         } else {
           return this;
         }
@@ -504,13 +504,13 @@
         });
 
         // Check if we are working if a broken client.
-        if ((new RegExp("MSIE ([0-9]{1,}[\\.0-9]{0,})")).exec(window.navigator.userAgent) && (parseFloat(RegExp.$1) <= 8.0)) {
+        if ((new RegExp('MSIE ([0-9]{1,}[\\.0-9]{0,})')).exec(window.navigator.userAgent) && (parseFloat(RegExp.$1) <= 8.0)) {
           this._ltIE9 = true;
         }
 
         // Execute each control initializer that was set to true.
         for (var o in this.options) {
-          if (this.options[o] === true && typeof this[o] === "function") {
+          if (this.options[o] === true && typeof this[o] === 'function') {
             this[o]();
           }
         }
@@ -535,8 +535,8 @@
    */
   $.fn[pluginName] = function (options) {
     // Only create a new instance if none has been registered so far.
-    if (!$.data(this, "plugin_" + pluginName)) {
-      $.data(this, "plugin_" + pluginName, new Plugin(this, options));
+    if (!$.data(this, 'plugin_' + pluginName)) {
+      $.data(this, 'plugin_' + pluginName, new Plugin(this, options));
     }
 
     return this;
