@@ -1,0 +1,40 @@
+{
+  "name": "jquery.scrollSections",
+  "version": "0.3.0",
+  "description": "A plugin that allows you to define (full page) sections and scroll between them with mousewheel, keyboard, scrollbar and/or touch moves.\n\n The following jQuery plugins are required for this plugin to work properly:\n - jQuery mousewheel if you want mousewheel support {@link https://github.com/brandonaaron/jquery-mousewheel}\n - jQuery Special Events scrollstart & scrollstop if you want scrollbar support {@link http://james.padolsey.com/demos/scrollevents/}",
+  "main": "index.js",
+  "url": "https://github.com/guins/jquery-scrollsections",
+  "directories": {
+    "example": "example",
+    "src": "src",
+    "build": "build"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/guins/jquery-scrollsections.git"
+  },
+  "keywords": [
+    "javascript",
+    "jquery",
+    "scroll",
+    "scrollsections",
+    "fullpage"
+  ],
+  "author": "Stéphane Guigné <http://stephaneguigne.com/>",
+  "contributor": "Richard Fussenegger <http://richard.fussenegger.info/>",
+  "license": "MIT",
+  "gitHead": "62dd253d40848df75f1c016a7c619a705c797627",
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-watch": "~0.4.4",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-banner": "~0.1.4",
+    "grunt-contrib-clean": "~0.4.1"
+  }
+}
