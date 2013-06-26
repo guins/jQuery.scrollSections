@@ -70,7 +70,7 @@
    *   [Optional] Overwrite default options of the plugin.
    * @returns {Plugin}
    */
-  function Plugin(elements, options) {
+  var Plugin = function(elements, options) {
     this.elements = elements;
     this.options = $.extend({}, defaults, options);
     this._defaults = defaults;
@@ -167,7 +167,7 @@
           event.preventDefault();
           self._$nav._$menuitems.removeClass(self.options.active);
           $this.addClass(self.options.active);
-          self.scrollTo(parseInt($this.data(self.options.prefix), 10));
+          self.customScrollTo(parseInt($this.data(self.options.prefix), 10));
 
           return false;
         });
@@ -198,7 +198,7 @@
         var diff = self._$htmlBody.outerHeight();
         var nextStep;
         var diffTmp;
-        event.preventDefault();
+
         self._scrollPaused = false;
         if (scrollTop === 0 && self._currentStep !== 0) {
           nextStep = 0;
@@ -218,9 +218,8 @@
           }
         }
         if (nextStep > -1) {
-          self.scrollTo(nextStep);
+          self.customScrollTo(nextStep);
         }
-        return false;
       });
 
       return this;
@@ -244,7 +243,7 @@
           event.preventDefault();
           if ((diff.y <= -100 || diff.y >= 100) && Math.abs(diff.y) > Math.abs(diff.x)) {
             nextStep = diff.y < 0 ? self._currentStep - 1 : self._currentStep + 1;
-            self.scrollTo(nextStep);
+            self.customScrollTo(nextStep);
           }
           return false;
         });
@@ -269,20 +268,20 @@
           case 33: // page up
           case 36: // pos 1
             event.preventDefault();
-            self.scrollTo(0);
+            self.customScrollTo(0);
             return false;
 
           case 34: // page down
           case 35: // end
             event.preventDefault();
-            self.scrollTo(self._sections - 1);
+            self.customScrollTo(self._sections - 1);
             return false;
 
           case 38: // up
             event.preventDefault();
             nextStep = self._currentStep - 1;
             if (nextStep >= 0) {
-              self.scrollTo(nextStep);
+              self.customScrollTo(nextStep);
             }
             return false;
 
@@ -290,7 +289,7 @@
             event.preventDefault();
             nextStep = self._currentStep + 1;
             if (nextStep < self._sections) {
-              self.scrollTo(nextStep);
+              self.customScrollTo(nextStep);
             }
             return false;
         }
@@ -327,7 +326,7 @@
      *   Set to true if there should be no animation at all.
      * @returns {Plugin}
      */
-    scrollTo: function (index, noAnimation) {
+    customScrollTo: function (index, noAnimation) {
       var self = this;
       var yTo;
       var speed;
@@ -363,7 +362,7 @@
      * @returns {Plugin}
      */
     mousewheelScrollTo: function (index) {
-      this.scrollTo(index);
+      this.customScrollTo(index);
       this._wheelDelay = null;
       this._scrollPaused = true;
       return this;
@@ -487,7 +486,7 @@
           if (self.options.alwaysStartWithFirstSection === true && index === 0) {
             $section.addClass(self.options.active);
             self._$currentSection = $section;
-            self.scrollTo(0, !self.options.animateScrollToFirstSection);
+            self.customScrollTo(0, !self.options.animateScrollToFirstSection);
           } else {
             offset = $section.offset();
             offset.bottom = offset.top + $section.height();
@@ -498,7 +497,7 @@
               self._currentStep = index;
               self._$currentSection = $section;
               if (windowScrollTop !== offset.top) {
-                self.scrollTo(index);
+                self.customScrollTo(index);
               }
             }
           }
@@ -518,7 +517,7 @@
 
         // Bind to resize event and keep the current section always within the viewport.
         this._$window.resize(function () {
-          self.scrollTo(self._currentStep);
+          self.customScrollTo(self._currentStep);
         });
       }
 
