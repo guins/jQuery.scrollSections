@@ -140,34 +140,49 @@
 				if (this.options.createNavigation) {
 					this.createNavigation();
 					this.options.createNavigation = false;
+
+					// Add the sections index to each menuitem.
+					this._$nav._$menuitems = $('a', this._$nav).each(function (index) {
+						var $this = $(this);
+
+						// If this menuitem is the currently active one, add the class so our CSS knows about this as well.
+						if (index === self._currentStep) {
+							$this.addClass(self.options.active);
+						}
+
+						$this.data(self.options.prefix, index);
+					});
 				}
 				// Navigation is already present in the DOM, try to get it.
 				else {
 					this._$nav = $('#' + this.options.prefix + '-navigation');
+					this._$nav._$menuitems = $('a', this._$nav).each(function(){
+						var $this = $(this),
+							sectionIndex = self._sectionIdentifiers.indexOf($this.attr('href').substr(1));
+						if(sectionIndex===self._currentStep){
+							$this.addClass(self.options.active);
+						}
+						// assign section index to menu item
+						$this.data(self.options.prefix, sectionIndex);
+					});
 				}
-
-				// Add the sections index to each menuitem.
-				this._$nav._$menuitems = $('a', this._$nav).each(function (index) {
-					var $this = $(this);
-
-					// If this menuitem is the currently active one, add the class so our CSS knows about this as well.
-					if (index === self._currentStep) {
-						$this.addClass(self.options.active);
-					}
-
-					$this.data(self.options.prefix, index);
-				});
 			}
 
 			// Well, do we have a navigation now?
 			if (this._$nav != null && this._$nav.length > 0) {
 				this._$nav._$menuitems.click(function (event) {
-					var $this = $(this);
+					var $this = $(this),
+						sectionIndex = parseInt($this.data(self.options.prefix), 10);
 
 					event.preventDefault();
 					self._$nav._$menuitems.removeClass(self.options.active);
 					$this.addClass(self.options.active);
-					self.customScrollTo(parseInt($this.data(self.options.prefix), 10));
+					if(sectionIndex>=0){
+						self.customScrollTo(parseInt($this.data(self.options.prefix), 10));
+					}
+					else if(self.options.exceptions){
+						throw new ScrollSectionsException('Section not find for this menu item, make sure the href is the same as the section id');
+					}
 
 					return false;
 				});

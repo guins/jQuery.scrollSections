@@ -1,0 +1,89 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+	<title></title>
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<meta name="viewport" content="width=device-width">
+
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="../src/css/jquery.scrollSections.css">
+
+	<script src="js/vendor/modernizr-2.5.3.min.js"></script>
+
+	<style type="text/css">
+		#scrollsections-navigation {
+			z-index: 1000;
+			position: fixed;
+			top: 15px;
+			left: 10px;
+			right: 0;
+			width: 100%;
+			margin: 0;
+		}
+		#scrollsections-navigation a {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			color: white;
+			margin-right: 20px;
+			text-decoration: none;
+		}
+		#scrollsections-navigation a.active-scrollsection {
+			text-decoration: underline;
+		}
+	</style>
+</head>
+<body>
+
+<nav id="scrollsections-navigation">
+	<a href="#works" title="">Works</a>
+	<a href="#home" title="">Home</a>
+	<a href="#bio" title="">Biography</a>
+	<a href="#clients" title="">Clients</a>
+</nav>
+
+<section id="home" class="scrollsections">
+</section>
+
+<section id="about" class="scrollsections">
+</section>
+
+<section id="works" class="scrollsections">
+</section>
+
+<section id="contact" class="scrollsections">
+</section>
+
+<section id="other" class="scrollsections">
+</section>
+
+<section id="clients" class="scrollsections">
+</section>
+
+<section id="bio" class="scrollsections">
+</section>
+
+<section id="networks" class="scrollsections">
+</section>
+
+<script src="js/vendor/jquery-1.7.2.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="../src/js/jquery.scrollSections.js"></script>
+<!-- <script src="../build/js/jquery.scrollSections-0.4.1.min.js"></script> -->
+<script>
+	$(function() {
+		$('section.scrollsections').scrollSections({
+			createNavigation: false,
+			navigation: true
+		});
+	});
+</script>
+
+</body>
+</html>
