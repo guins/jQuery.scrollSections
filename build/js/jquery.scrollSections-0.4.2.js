@@ -6,14 +6,14 @@ A plugin that allows you to define (full page) sections and scroll between them 
  - jQuery mousewheel if you want mousewheel support {@link https://github.com/brandonaaron/jquery-mousewheel}
  - jQuery Special Events scrollstart & scrollstop if you want scrollbar support {@link http://james.padolsey.com/demos/scrollevents/}
 *
-* @version 0.4.1
+* @version 0.4.2
 * @link https://github.com/guins/jquery-scrollsections
 * @author Stéphane Guigné <http://stephaneguigne.com/>
 * @author Richard Fussenegger <http://richard.fussenegger.info/>
 * @license MIT
 * @copyright (c) 2011-2013, Stéphane Guigné
 *
-* Last modification : 2013-07-16
+* Last modification : 2013-07-18
 *
 */
 
@@ -344,7 +344,7 @@ A plugin that allows you to define (full page) sections and scroll between them 
 
 			if (before && this.options.before) {
 				this.options.before();
-			} else if (this.options.after) {
+			} else if (!before && this.options.after) {
 				this.options.after();
 			}
 
@@ -379,8 +379,12 @@ A plugin that allows you to define (full page) sections and scroll between them 
 				}
 
 				// Call the before callback, stop any ongoing animation and animate to our current new section.
-				this.scrollCallback(true)._$htmlBody.stop(true, false).animate({ scrollTop: yTo }, speed, function () {
-					// Call the after callback.
+				this.scrollCallback(true);
+				// Using deferred object otherwise callback happens twice because we are animating 2 jQuery objects for cross-browser compatibiity
+				$.when(
+					this._$htmlBody.stop(true, false).animate({ scrollTop: yTo }, speed)
+				).done(function(){
+					// Call the after callback
 					self.scrollCallback();
 				});
 			}

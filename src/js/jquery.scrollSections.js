@@ -325,7 +325,7 @@
 
 			if (before && this.options.before) {
 				this.options.before();
-			} else if (this.options.after) {
+			} else if (!before && this.options.after) {
 				this.options.after();
 			}
 
@@ -360,8 +360,12 @@
 				}
 
 				// Call the before callback, stop any ongoing animation and animate to our current new section.
-				this.scrollCallback(true)._$htmlBody.stop(true, false).animate({ scrollTop: yTo }, speed, function () {
-					// Call the after callback.
+				this.scrollCallback(true);
+				// Using deferred object otherwise callback happens twice because we are animating 2 jQuery objects for cross-browser compatibiity
+				$.when(
+					this._$htmlBody.stop(true, false).animate({ scrollTop: yTo }, speed)
+				).done(function(){
+					// Call the after callback
 					self.scrollCallback();
 				});
 			}

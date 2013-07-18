@@ -1,7 +1,7 @@
 {
   "name": "jquery.scrollSections",
   "fullname": "jQuery ScrollSections Plugin",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A plugin that allows you to define (full page) sections and scroll between them with mousewheel, keyboard, scrollbar and/or touch moves.\n\n The following jQuery plugins are required for this plugin to work properly:\n - jQuery mousewheel if you want mousewheel support {@link https://github.com/brandonaaron/jquery-mousewheel}\n - jQuery Special Events scrollstart & scrollstop if you want scrollbar support {@link http://james.padolsey.com/demos/scrollevents/}",
   "main": "index.js",
   "url": "https://github.com/guins/jquery-scrollsections",
