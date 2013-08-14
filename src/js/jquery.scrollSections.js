@@ -88,6 +88,7 @@
 		this._isAnimated = false;
 		this._wheelDelay = null;
 		this._scrollPaused = false;
+		this._isScrollPrevented = false;
 		this._$nav = null;
 		this._ltIE9 = false;
 
@@ -423,8 +424,8 @@
 
 				event.preventDefault();
 
-				// Only scroll if we are not animating and scrolling is not paused.
-				if (!(self._isAnimated && self._scrollPaused)) {
+				// Only scroll if we are not animating and scrolling is not paused or prevent.
+				if (!(self._isAnimated && self._scrollPaused) && !self._isScrollPrevented ) {
 
 					deltaY = deltaY>>0; // Because steps numbers are integers
 
@@ -469,11 +470,35 @@
 						}
 					}
 				}
+				else {
+					self.killCurrentScrolling();
+				}
 
 				return false;
 			});
 
 			return this;
+		},
+
+		/**
+		 * Kill current scrolling
+		 * by preventing the current scroll event
+		 * and defining a setTimeout before to handle it again
+		 *
+		 * @returns {Plugin}
+		 */
+		killCurrentScrolling: function(){
+			var self = this;
+
+			if( self._isScrollPrevented ){
+				clearTimeout(self._isScrollPrevented);
+				self._isScrollPrevented = null;
+			}
+			self._isScrollPrevented = setTimeout(function(){
+				self._isScrollPrevented = false;
+			}, 200);
+
+			return self;
 		},
 
 		/**
