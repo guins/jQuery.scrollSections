@@ -84,17 +84,11 @@
 				alwaysStartWithFirstSection : true, // force to load the page on the first section (prevent broswer caching)
 				
 				before: function($currentSection, $nextSection){
-					console.log('scrollsections before');
-					console.log('currentSection id: '+$currentSection.attr('id'));
-					console.log('nextSection id: '+$nextSection.attr('id'));
 
 					_initFuturSection($nextSection);
 				},
 				
 				after: function($currentSection, $previousSection){
-					console.log('scrollsections after');
-					console.log('currentSection id: '+$currentSection.attr('id'));
-					console.log('previousSection id: '+$previousSection.attr('id'));
 
 					_initNewSection($currentSection, $previousSection);
 				}
@@ -103,7 +97,11 @@
 		function _initNewSection($section, $prevSection){
 
 			// Do some stuff each time this new section ends animating
-			$('.title', $prevSection).hide(); // Hide old section title
+			
+			// Only if there is a previous section (its null on first scroll)
+			if($prevSection){
+				$('.title', $prevSection).hide(); // Hide old section title
+			}
 			$('.title', $section).fadeIn(); // Fade in current section title
 			
 			// Do some stuffs only on first init
