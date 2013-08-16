@@ -2,7 +2,7 @@
 
 A plugin that allows you to define (full page) sections and scroll between them with mousewheel, keyboard, scrollbar and/or touch moves.
 
-Here is a very simple [demo](http://lab.stephaneguigne.com/js/jquery-scrollsections/example/)
+Here is a very simple [demo](http://lab.stephaneguigne.com/js/jquery-scrollsections/example/callbacks.html)
 
 
 ## Requirement (for a full support)
