@@ -82,6 +82,7 @@
 		this._$sections = [];
 		this._sectionIdentifiers = [];
 		this._delayFirstScroll = null;
+		this._$previousSection = null;
 		this._$currentSection = null;
 		this._currentStep = 0;
 		this._isFirstSection = true;
@@ -324,9 +325,9 @@
 			this._isAnimated = before || false;
 
 			if (before && this.options.before) {
-				this.options.before();
+				this.options.before(this._$previousSection, this._$currentSection);
 			} else if (!before && this.options.after) {
-				this.options.after();
+				this.options.after(this._$currentSection, this._$previousSection);
 			}
 
 			return this;
@@ -348,6 +349,8 @@
 
 			if (index != null && index >= 0 && index < this._sections) {
 				this._currentStep = index;
+
+				this._$previousSection = this._$currentSection;
 				this._$currentSection = this._$sections[index];
 
 				yTo = this._$currentSection.offset().top;
