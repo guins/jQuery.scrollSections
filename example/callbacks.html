@@ -81,7 +81,8 @@
 
 		$('section.scrollsections')
 			.scrollSections({
-				alwaysStartWithFirstSection : true,
+				alwaysStartWithFirstSection : true, // force to load the page on the first section (prevent broswer caching)
+				
 				before: function($currentSection, $nextSection){
 					console.log('scrollsections before');
 					console.log('currentSection id: '+$currentSection.attr('id'));
@@ -89,6 +90,7 @@
 
 					_initFuturSection($nextSection);
 				},
+				
 				after: function($currentSection, $previousSection){
 					console.log('scrollsections after');
 					console.log('currentSection id: '+$currentSection.attr('id'));

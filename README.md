@@ -46,9 +46,13 @@ Here is a full options example
 		// Maximum sections to scroll within mousewheel interaction.
 		scrollMax: 1,
 		// Function to execute before each scroll.
-		before: null,
+		// $currentSection [jQuery object] - the current visible section
+		// $nextSection [jQuery object] - the futur selected section
+		before: function($currentSection, $nextSection){},
 		// Function to execute after each scroll.
-		after: null,
+		// $currentSection [jQuery object] - the current visible section
+		// $previousSection [jQuery object] - the previous section
+		after: function($currentSection, $previousSection){},
 		// Prefix for classes and ids of DOM elements.
 		prefix: 'scrollsections',
 		// Scroll to first section on initialization, instead of the section that is visible. Also have a look at the option
