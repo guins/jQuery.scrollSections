@@ -1,0 +1,126 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+	<title></title>
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<meta name="viewport" content="width=device-width">
+
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="../src/css/jquery.scrollSections.css">
+
+	<style type="text/css">
+		section {
+			position: relative;
+		}
+
+		.title {
+			color: white;
+			line-height: 60px;
+			font-size: 60px;
+			font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			margin: -30px 0 0 -200px;
+			width: 400px;
+			text-align: center;
+		}
+	</style>
+
+	<script src="js/vendor/modernizr-2.5.3.min.js"></script>
+</head>
+<body>
+
+<section id="home" class="scrollsections">
+	<div class="title">HOME</div>
+</section>
+
+<section id="about" class="scrollsections">
+	<div class="title">ABOUT</div>
+</section>
+
+<section id="works" class="scrollsections">
+	<div class="title">WORK</div>
+</section>
+
+<section id="contact" class="scrollsections">
+	<div class="title">CONTACT</div>
+</section>
+
+<section id="other" class="scrollsections">
+	<div class="title">OTHER</div>
+</section>
+
+<section id="clients" class="scrollsections">
+	<div class="title">CLIENTS</div>
+</section>
+
+<section id="bio" class="scrollsections">
+	<div class="title">BIO</div>
+</section>
+
+<section id="networks" class="scrollsections">
+	<div class="title">NETWORKS</div>
+</section>
+
+<script src="js/vendor/jquery-1.7.2.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="../src/js/jquery.scrollSections.js"></script>
+<script>
+	$(function() {
+		
+		$('section.scrollsections .title').hide(); // Hide all titles
+
+		$('section.scrollsections')
+			.scrollSections({
+				alwaysStartWithFirstSection : true,
+				before: function($currentSection, $nextSection){
+					console.log('scrollsections before');
+					console.log('currentSection id: '+$currentSection.attr('id'));
+					console.log('nextSection id: '+$nextSection.attr('id'));
+
+					_initFuturSection($nextSection);
+				},
+				after: function($currentSection, $previousSection){
+					console.log('scrollsections after');
+					console.log('currentSection id: '+$currentSection.attr('id'));
+					console.log('previousSection id: '+$previousSection.attr('id'));
+
+					_initNewSection($currentSection, $previousSection);
+				}
+			});
+
+		function _initNewSection($section, $prevSection){
+
+			// Do some stuff each time this new section ends animating
+			$('.title', $prevSection).hide(); // Hide old section title
+			$('.title', $section).fadeIn(); // Fade in current section title
+			
+			// Do some stuffs only on first init
+			if( !$section.data('isInit') ){
+				// Create slider for example
+				// $('.selector', $section).slider();
+
+				// Singleton
+				$section.data('isInit', true);
+			}
+		}
+
+		function _initFuturSection($section){
+
+			// Do some stuff each time before this section appears
+			$('.title', $section).hide();
+		}
+	});
+</script>
+
+</body>
+</html>
