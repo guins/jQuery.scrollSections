@@ -6,14 +6,14 @@ A plugin that allows you to define (full page) sections and scroll between them 
  - jQuery mousewheel if you want mousewheel support {@link https://github.com/brandonaaron/jquery-mousewheel}
  - jQuery Special Events scrollstart & scrollstop if you want scrollbar support {@link http://james.padolsey.com/demos/scrollevents/}
 *
-* @version 0.4.2
+* @version 0.4.3
 * @link https://github.com/guins/jquery-scrollsections
 * @author Stéphane Guigné <http://stephaneguigne.com/>
 * @author Richard Fussenegger <http://richard.fussenegger.info/>
 * @license MIT
 * @copyright (c) 2011-2013, Stéphane Guigné
 *
-* Last modification : 2013-07-18
+* Last modification : 2013-08-16
 *
 */
 
@@ -101,6 +101,7 @@ A plugin that allows you to define (full page) sections and scroll between them 
 		this._$sections = [];
 		this._sectionIdentifiers = [];
 		this._delayFirstScroll = null;
+		this._$previousSection = null;
 		this._$currentSection = null;
 		this._currentStep = 0;
 		this._isFirstSection = true;
@@ -343,9 +344,9 @@ A plugin that allows you to define (full page) sections and scroll between them 
 			this._isAnimated = before || false;
 
 			if (before && this.options.before) {
-				this.options.before();
+				this.options.before(this._$previousSection, this._$currentSection);
 			} else if (!before && this.options.after) {
-				this.options.after();
+				this.options.after(this._$currentSection, this._$previousSection);
 			}
 
 			return this;
@@ -367,6 +368,8 @@ A plugin that allows you to define (full page) sections and scroll between them 
 
 			if (index != null && index >= 0 && index < this._sections) {
 				this._currentStep = index;
+
+				this._$previousSection = this._$currentSection;
 				this._$currentSection = this._$sections[index];
 
 				yTo = this._$currentSection.offset().top;
